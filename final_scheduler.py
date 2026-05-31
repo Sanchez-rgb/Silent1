@@ -1,0 +1,223 @@
+import sqlite3
+import datetime
+import time
+import random
+from snownlp import SnowNLP
+
+
+class XiaohongshuMockAPI:
+    def __init__(self):
+        self.blogger_notes = {}
+        self._init_mock_data()
+
+    def _init_mock_data(self):
+        bloggers = ['blogger_001', 'blogger_002', 'blogger_003']
+        for blogger_id in bloggers:
+            self.blogger_notes[blogger_id] = []
+            num_notes = random.randint(3, 5)
+            for i in range(num_notes):
+                publish_time = datetime.datetime.now() - datetime.timedelta(days=random.randint(0, 7), hours=random.randint(0, 23))
+                note = {
+                    'note_id': f'note_{blogger_id}_{i}_{int(time.time())}',
+                    'title': self._generate_random_title(),
+                    'content': self._generate_random_content(),
+                    'publish_time': publish_time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'comments': self._generate_random_comments()
+                }
+                self.blogger_notes[blogger_id].append(note)
+
+    def _generate_random_title(self):
+        titles = ['今天分享我的穿搭秘诀！', '这款护肤品真的太好用了', '周末探店vlog来啦', '美食分享：这家店绝了', '旅行攻略：小众打卡地', '好物推荐：必买清单']
+        return random.choice(titles)
+
+    def _generate_random_content(self):
+        contents = ['今天天气真好，心情特别棒！', '这款产品真的很推荐，大家可以试试', '这个地方真的太美了，下次还要来', '这家店的味道太赞了，强烈推荐']
+        return random.choice(contents)
+
+    def _generate_random_comments(self):
+        comments = []
+        positive_texts = ['太赞了！', '好喜欢！', '太棒了！', '学到了！', '种草了！']
+        neutral_texts = ['还行吧', '一般般', '看看', '嗯', '了解了']
+        negative_texts = ['不太好', '一般', '不喜欢', '有点失望']
+
+        num_comments = random.randint(15, 25)
+        for i in range(num_comments):
+            choice = random.random()
+            if choice < 0.6:
+                text = random.choice(positive_texts)
+            elif choice < 0.85:
+                text = random.choice(neutral_texts)
+            else:
+                text = random.choice(negative_texts)
+
+            comments.append({'comment_id': f'comment_{i}_{int(time.time())}', 'text': text})
+        return comments
+
+    def get_blogger_notes(self, blogger_id):
+        return self.blogger_notes.get(blogger_id, [])
+
+
+def analyze_sentiment(text):
+    try:
+        s = SnowNLP(text)
+        score = s.sentiments
+        if score > 0.6:
+            return 'positive', score
+        elif score < 0.4:
+            return 'negative', score
+        else:
+            return 'neutral', score
+    except Exception as e:
+        return 'neutral', 0.5
+
+
+def run_task():
+    print(f"\n{'='*60}")
+    print(f"任务开始执行时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*60}\n")
+
+    api = XiaohongshuMockAPI()
+    conn = sqlite3.connect('xiaohongshu.db')
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT blogger_id, blogger_name, last_check_time FROM followed_blogs')
+    bloggers = cursor.fetchall()
+    print(f"找到 {len(bloggers)} 位关注的博主\n")
+
+    total_processed = 0
+    total_comments = 0
+
+    for blogger_id, blogger_name, last_check_time_str in bloggers:
+        print(f"--- 处理博主: {blogger_name} (ID: {blogger_id}) ---")
+        print(f"上次检查时间: {last_check_time_str}")
+
+        try:
+            last_check_time = datetime.datetime.strptime(last_check_time_str, '%Y-%m-%d %H:%M:%S')
+        except:
+            last_check_time = datetime.datetime(2000, 1, 1)
+
+        notes = api.get_blogger_notes(blogger_id)
+        new_notes_count = 0
+
+        for note in notes:
+            try:
+                note_publish_time = datetime.datetime.strptime(note['publish_time'], '%Y-%m-%d %H:%M:%S')
+            except:
+                continue
+
+            if note_publish_time > last_check_time:
+                new_notes_count += 1
+                print(f"\n发现新笔记: {note['title']}")
+                print(f"发布时间: {note['publish_time']}")
+
+                try:
+                    cursor.execute('''
+                        INSERT OR IGNORE INTO notes (note_id, blogger_id, blogger_name, title, content, publish_time)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (note['note_id'], blogger_id, blogger_name, note['title'], note['content'], note['publish_time']))
+                except Exception as e:
+                    print(f"保存笔记时出错: {e}")
+
+                comments = note['comments'][:20]
+                print(f"处理 {len(comments)} 条评论...")
+
+                for comment in comments:
+                    sentiment, confidence = analyze_sentiment(comment['text'])
+                    try:
+                        cursor.execute('''
+                            INSERT INTO comments_analysis 
+                            (blogger_id, blogger_name, note_id, note_title, note_publish_time, comment_id, comment_text, sentiment, confidence)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ''', (blogger_id, blogger_name, note['note_id'], note['title'], note['publish_time'], 
+                             comment['comment_id'], comment['text'], sentiment, confidence))
+                        total_comments += 1
+                    except Exception as e:
+                        print(f"保存评论时出错: {e}")
+
+                print(f"笔记分析完成: {len(comments)} 条评论已处理")
+
+        if new_notes_count > 0:
+            cursor.execute('''
+                UPDATE followed_blogs
+                SET last_check_time = ?
+                WHERE blogger_id = ?
+            ''', (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), blogger_id))
+            print(f"更新检查时间完成")
+
+        total_processed += 1
+        print(f"博主处理完成: {new_notes_count} 条新笔记\n")
+
+    conn.commit()
+    conn.close()
+
+    print(f"{'='*60}")
+    print(f"任务执行完成!")
+    print(f"处理博主数: {total_processed}")
+    print(f"处理评论数: {total_comments}")
+    print(f"完成时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*60}\n")
+
+
+if __name__ == "__main__":
+    print("初始化数据库...")
+    conn = sqlite3.connect('xiaohongshu.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS followed_blogs (
+            blogger_id TEXT PRIMARY KEY,
+            blogger_name TEXT NOT NULL,
+            last_check_time DATETIME DEFAULT '2000-01-01 00:00:00',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS comments_analysis (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            blogger_id TEXT NOT NULL,
+            blogger_name TEXT NOT NULL,
+            note_id TEXT NOT NULL,
+            note_title TEXT,
+            note_publish_time DATETIME,
+            comment_id TEXT NOT NULL,
+            comment_text TEXT NOT NULL,
+            sentiment TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            note_id TEXT UNIQUE NOT NULL,
+            blogger_id TEXT NOT NULL,
+            blogger_name TEXT NOT NULL,
+            title TEXT,
+            content TEXT,
+            publish_time DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    sample_bloggers = [
+        ('blogger_001', '时尚达人小美', '2024-01-01 00:00:00'),
+        ('blogger_002', '美食探店家', '2024-01-01 00:00:00'),
+        ('blogger_003', '旅行日记', '2024-01-01 00:00:00')
+    ]
+
+    for blogger_id, name, check_time in sample_bloggers:
+        try:
+            cursor.execute('''
+                INSERT OR IGNORE INTO followed_blogs (blogger_id, blogger_name, last_check_time)
+                VALUES (?, ?, ?)
+            ''', (blogger_id, name, check_time))
+        except Exception as e:
+            pass
+
+    conn.commit()
+    conn.close()
+    print("数据库初始化完成！")
+
+    run_task()

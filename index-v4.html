@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红评洞察 - 小红书情感分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-subtitle {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-phone {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .main {
+            padding: 40px 20px;
+        }
+
+        /* Auth Container */
+        .auth-container {
+            max-width: 420px;
+            margin: 60px auto;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-title h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .auth-title p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        /* Auth Tabs */
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            color: white;
+        }
+
+        /* Form */
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff4757;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .code-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .code-input-group .form-input {
+            flex: 1;
+        }
+
+        .btn-code {
+            padding: 14px 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-code:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-code:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .auth-footer a {
+            color: #ff4757;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* App Container */
+        .app-container {
+            display: none;
+        }
+
+        .app-container.active {
+            display: block;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .qr-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .qr-image {
+            max-width: 250px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            display: inline-block;
+        }
+
+        .qr-image img {
+            width: 100%;
+            display: block;
+        }
+
+        .qr-status {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 20px;
+        }
+
+        .qr-status.success {
+            color: #2ed573;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            animation: slideIn 0.3s;
+        }
+
+        .toast.error {
+            background: rgba(255, 71, 87, 0.9);
+        }
+
+        .toast.success {
+            background: rgba(46, 213, 115, 0.9);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Sections */
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #ff4757;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">❤️</div>
+                <div>
+                    <div class="logo-text">红评洞察</div>
+                    <div class="logo-subtitle">XIAOHONGSHU INSIGHTS</div>
+                </div>
+            </div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span class="user-phone" id="userPhone"></span>
+                <button class="btn btn-secondary" onclick="logout()">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Auth Container -->
+        <div class="auth-container" id="authContainer">
+            <div class="auth-title">
+                <h1>👋 欢迎回来</h1>
+                <p>登录小红书情感分析平台</p>
+            </div>
+
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="password" onclick="switchTab('password')">
+                    密码登录
+                </button>
+                <button class="auth-tab" data-tab="code" onclick="switchTab('code')">
+                    验证码登录
+                </button>
+            </div>
+
+            <!-- Password Login Form -->
+            <form class="auth-form active" id="passwordForm" onsubmit="return handlePasswordLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <input type="tel" class="form-input" id="loginPhone" placeholder="请输入手机号" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码（6-20位）">
+                </div>
+                <button type="submit" class="btn btn-primary btn-submit">登录</button>
+                <div class="auth-footer">
+                    还没有账号？<a onclick="showRegister()">立即注册</a>
+                </div>
+            </form>
+
+            <!-- Code Login Form -->
+            <form class="auth-form" id="codeForm" onsubmit="return handleCodeLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <input type="tel" class="form-input" id="codeLoginPhone" placeholder="请输入手机号" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">验证码</label>
+                    <div class="code-input-group">
+                        <input type="text" class="form-input" id="codeInput" placeholder="请输入验证码" maxlength="6">
+                        <button type="button" class="btn-code" id="sendCodeBtn" onclick="sendVerificationCode()">
+                            获取验证码
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-submit">登录</button>
+                <div class="auth-footer">
+                    还没有账号？<a onclick="showRegister()">立即注册</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-container" id="registerContainer" style="display: none;">
+            <div class="auth-title">
+                <h1>📝 创建账号</h1>
+                <p>注册小红书情感分析平台</p>
+            </div>
+
+            <form onsubmit="return handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <input type="tel" class="form-input" id="registerPhone" placeholder="请输入手机号" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设置密码</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="请输入密码（6-20位）">
+                    <div class="form-text">密码长度6-20位，可包含字母和数字</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">确认密码</label>
+                    <input type="password" class="form-input" id="registerPassword2" placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="btn btn-primary btn-submit">注册</button>
+                <div class="auth-footer">
+                    已有账号？<a onclick="showLogin()">立即登录</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- App Container -->
+        <div class="app-container" id="appContainer">
+            <!-- Cookie Status -->
+            <div class="qr-section" id="cookieSection">
+                <div class="qr-title">🔐 小红书Cookie绑定</div>
+                <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+                    扫码绑定小红书Cookie，即可开始爬取和分析
+                </p>
+
+                <div class="qr-image" id="qrImage">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在生成二维码...</p>
+                    </div>
+                </div>
+
+                <div class="qr-status" id="qrStatus">请使用小红书App扫码绑定</div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="generateQRCode()">刷新二维码</button>
+                    <button class="btn btn-primary" onclick="simulateConfirm()">模拟确认（测试用）</button>
+                </div>
+
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 12px; color: rgba(255,255,255,0.5);">
+                    💡 提示：由于是模拟环境，点击「模拟确认」即可完成绑定
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="section">
+                <div class="section-title">📊 数据概览</div>
+                <div class="dashboard">
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-label">笔记总数</div>
+                        <div class="stat-value" id="statNotes">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-label">评论总数</div>
+                        <div class="stat-value" id="statComments">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">😊</div>
+                        <div class="stat-label">好评数</div>
+                        <div class="stat-value" id="statPositive">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">😞</div>
+                        <div class="stat-label">差评数</div>
+                        <div class="stat-value" id="statNegative">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Advice -->
+            <div class="section">
+                <div class="section-title">💡 AI改进建议</div>
+                <div id="aiAdvice">
+                    <p style="color: rgba(255,255,255,0.6);">暂无数据，请先爬取笔记</p>
+                </div>
+            </div>
+
+            <!-- Crawl Section -->
+            <div class="section">
+                <div class="section-title">🔍 爬取笔记</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" class="form-input" id="bloggerId" placeholder="请输入博主ID" style="flex: 1;">
+                    <button class="btn btn-primary" onclick="startCrawl()">开始爬取</button>
+                </div>
+                <div id="crawlResult"></div>
+            </div>
+
+            <!-- Notes List -->
+            <div class="section">
+                <div class="section-title">📋 笔记列表</div>
+                <div id="notesList">
+                    <p style="color: rgba(255,255,255,0.6);">暂无笔记数据</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" style="display: none;"></div>
+
+    <script>
+        // API Base
+        const API_BASE = 'http://localhost:8084';
+
+        // State
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let qrCheckInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token) {
+                checkAuth();
+            }
+        });
+
+        // Toast
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Tab Switch
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(tab === 'password' ? 'passwordForm' : 'codeForm').classList.add('active');
+        }
+
+        // Show Register/Login
+        function showRegister() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('registerContainer').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('registerContainer').style.display = 'none';
+        }
+
+        // Send Verification Code
+        async function sendVerificationCode() {
+            const phone = document.getElementById('codeLoginPhone').value.trim();
+
+            if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('sendCodeBtn');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/send_code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('验证码已发送！测试环境固定为：123456', 'success');
+
+                    // 60秒倒计时
+                    let countdown = 60;
+                    btn.textContent = `${countdown}秒后重试`;
+
+                    const timer = setInterval(() => {
+                        countdown--;
+                        if (countdown <= 0) {
+                            clearInterval(timer);
+                            btn.textContent = '获取验证码';
+                            btn.disabled = false;
+                        } else {
+                            btn.textContent = `${countdown}秒后重试`;
+                        }
+                    }, 1000);
+                } else {
+                    showToast(data.detail || '发送失败', 'error');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+                btn.disabled = false;
+            }
+        }
+
+        // Password Login
+        async function handlePasswordLogin(event) {
+            event.preventDefault();
+
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return false;
+            }
+
+            if (!password || password.length < 6) {
+                showToast('密码长度至少6位', 'error');
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    currentUser = data.user;
+
+                    showToast('登录成功！', 'success');
+                    showApp(data.user);
+                } else {
+                    showToast(data.detail || '登录失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+            }
+
+            return false;
+        }
+
+        // Code Login
+        async function handleCodeLogin(event) {
+            event.preventDefault();
+
+            const phone = document.getElementById('codeLoginPhone').value.trim();
+            const code = document.getElementById('codeInput').value.trim();
+
+            if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return false;
+            }
+
+            if (!code || code.length !== 6) {
+                showToast('请输入6位验证码', 'error');
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/login_by_code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, code })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    currentUser = data.user;
+
+                    showToast('登录成功！', 'success');
+                    showApp(data.user);
+                } else {
+                    showToast(data.detail || '登录失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+            }
+
+            return false;
+        }
+
+        // Register
+        async function handleRegister(event) {
+            event.preventDefault();
+
+            const phone = document.getElementById('registerPhone').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const password2 = document.getElementById('registerPassword2').value;
+
+            if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return false;
+            }
+
+            if (!password || password.length < 6 || password.length > 20) {
+                showToast('密码长度6-20位', 'error');
+                return false;
+            }
+
+            if (password !== password2) {
+                showToast('两次密码不一致', 'error');
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('注册成功！', 'success');
+                    showLogin();
+                    document.getElementById('loginPhone').value = phone;
+                } else {
+                    showToast(data.detail || '注册失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+            }
+
+            return false;
+        }
+
+        // Check Auth
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data;
+                    showApp(data);
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                logout();
+            }
+        }
+
+        // Show App
+        function showApp(user) {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('registerContainer').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+            document.getElementById('userInfo').style.display = 'flex';
+            document.getElementById('userPhone').textContent = user.phone;
+
+            // Load data
+            loadDashboard();
+            generateQRCode();
+        }
+
+        // Logout
+        function logout() {
+            token = null;
+            currentUser = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+
+            document.getElementById('appContainer').classList.remove('active');
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('authContainer').style.display = 'block';
+
+            if (qrCheckInterval) {
+                clearInterval(qrCheckInterval);
+            }
+
+            showToast('已退出登录');
+        }
+
+        // Generate QR Code
+        async function generateQRCode() {
+            if (!token) return;
+
+            const qrImage = document.getElementById('qrImage');
+            const qrStatus = document.getElementById('qrStatus');
+
+            qrImage.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在生成二维码...</p>
+                </div>
+            `;
+            qrStatus.textContent = '请使用小红书App扫码绑定';
+            qrStatus.className = 'qr-status';
+
+            try {
+                const response = await fetch(`${API_BASE}/qrcode/generate`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.qr_image) {
+                    qrImage.innerHTML = `<img src="${data.qr_image}" alt="QR Code">`;
+
+                    // 保存当前QR ID用于模拟确认
+                    currentQRId = data.qr_id;
+
+                    // Start checking QR status
+                    if (qrCheckInterval) {
+                        clearInterval(qrCheckInterval);
+                    }
+
+                    qrCheckInterval = setInterval(() => checkQRStatus(data.qr_id), 2000);
+                }
+            } catch (error) {
+                qrImage.innerHTML = '<p style="color: #ff4757;">生成失败，请重试</p>';
+            }
+        }
+
+        // Check QR Status
+        async function checkQRStatus(qr_id) {
+            try {
+                const response = await fetch(`${API_BASE}/qrcode/check/${qr_id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                const qrStatus = document.getElementById('qrStatus');
+
+                if (data.state === 'confirmed') {
+                    qrStatus.textContent = '✅ 绑定成功！';
+                    qrStatus.className = 'qr-status success';
+
+                    if (qrCheckInterval) {
+                        clearInterval(qrCheckInterval);
+                        qrCheckInterval = null;
+                    }
+
+                    // Refresh user info
+                    checkAuth();
+
+                    setTimeout(() => {
+                        generateQRCode();
+                    }, 3000);
+                } else if (data.state === 'expired') {
+                    qrStatus.textContent = '⏰ 二维码已过期，请刷新';
+                    qrStatus.className = 'qr-status';
+                }
+            } catch (error) {
+                console.error('Check QR failed:', error);
+            }
+        }
+
+        // Simulate QR Confirm (for testing)
+        let currentQRId = null;
+
+        async function simulateConfirm() {
+            if (!token) {
+                alert('请先登录！');
+                return;
+            }
+
+            if (!currentQRId) {
+                alert('请先生成二维码！');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/qrcode/confirm/${currentQRId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cookie: 'test_cookie_12345' })
+                });
+
+                const data = await response.json();
+                console.log('Confirm result:', data);
+
+                if (data.success) {
+                    const qrStatus = document.getElementById('qrStatus');
+                    qrStatus.textContent = '✅ 绑定成功！';
+                    qrStatus.className = 'qr-status success';
+
+                    if (qrCheckInterval) {
+                        clearInterval(qrCheckInterval);
+                        qrCheckInterval = null;
+                    }
+
+                    // Refresh user info
+                    checkAuth();
+
+                    alert('Cookie绑定成功！现在可以开始爬取了！');
+                } else {
+                    alert('绑定失败: ' + (data.detail || '未知错误'));
+                }
+            } catch (error) {
+                console.error('Confirm failed:', error);
+                alert('确认失败: ' + error.message);
+            }
+        }
+
+        // Load Dashboard
+        async function loadDashboard() {
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('statNotes').textContent = data.stats.total_notes;
+                    document.getElementById('statComments').textContent = data.stats.total_comments;
+                    document.getElementById('statPositive').textContent = data.stats.positive_count;
+                    document.getElementById('statNegative').textContent = data.stats.negative_count;
+                }
+            } catch (error) {
+                console.error('Load dashboard failed:', error);
+            }
+
+            // Load AI Advice
+            loadAIAdvice();
+
+            // Load Notes
+            loadNotes();
+        }
+
+        // Load AI Advice
+        async function loadAIAdvice() {
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/ai-advice`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('aiAdvice').innerHTML = `
+                        <div style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                            <p style="font-size: 16px; line-height: 1.8;">${data.advice}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Load AI advice failed:', error);
+            }
+        }
+
+        // Load Notes
+        async function loadNotes() {
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/notes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.notes.length > 0) {
+                    const notesHtml = data.notes.map(note => `
+                        <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 10px;">
+                            <div style="font-weight: 500; margin-bottom: 5px;">${note.note_title}</div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.5);">
+                                👍 ${note.like_count} 💬 ${note.comment_count}
+                            </div>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('notesList').innerHTML = notesHtml;
+                }
+            } catch (error) {
+                console.error('Load notes failed:', error);
+            }
+        }
+
+        // Start Crawl
+        async function startCrawl() {
+            if (!token) return;
+
+            const bloggerId = document.getElementById('bloggerId').value.trim();
+
+            if (!bloggerId) {
+                showToast('请输入博主ID', 'error');
+                return;
+            }
+
+            const resultDiv = document.getElementById('crawlResult');
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在爬取笔记...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/crawl`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ blogger_id: bloggerId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div style="padding: 20px; background: rgba(46, 213, 115, 0.1); border-radius: 10px;">
+                            <p style="color: #2ed573;">✅ 成功爬取 ${data.total_notes} 条笔记！</p>
+                        </div>
+                    `;
+
+                    // Refresh data
+                    loadDashboard();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="padding: 20px; background: rgba(255, 71, 87, 0.1); border-radius: 10px;">
+                            <p style="color: #ff4757;">❌ ${data.detail}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="padding: 20px; background: rgba(255, 71, 87, 0.1); border-radius: 10px;">
+                        <p style="color: #ff4757;">❌ 网络错误，请重试</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

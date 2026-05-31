@@ -1,0 +1,38 @@
+开始测试...
+Python: 3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]
+
+1. 导入FastAPI...
+OK
+
+2. 添加路径...
+OK
+
+3. 导入main_v2...
+OK
+App: <fastapi.applications.FastAPI object at 0x00000219951257F0>
+
+4. 测试路由...
+Routes: 11
+  /openapi.json {'GET', 'HEAD'}
+  /docs {'GET', 'HEAD'}
+  /docs/oauth2-redirect {'GET', 'HEAD'}
+  /redoc {'GET', 'HEAD'}
+  / {'GET'}
+  /health {'GET'}
+  /register {'POST'}
+  /login {'POST'}
+  /crawl/my_all_notes {'GET'}
+  /dashboard {'GET'}
+  /export_report {'GET'}
+OK
+
+5. 测试客户端...
+  测试/...
+    Status: 200
+    Response: {"message":"小红书情感分析系统 API","docs":"/docs","redoc":"/redoc","health":"ok"}
+  测试/health...
+    Status: 200
+    Response: {"status":"ok","timestamp":"2026-05-28T05:22:35.827444"}
+OK
+
+测试完成，全部通过！

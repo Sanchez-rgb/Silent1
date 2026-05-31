@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  word2pdf:
+    build: .
+    container_name: word2pdf-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # 持久化数据库
+      - ./word2pdf.db:/app/word2pdf.db
+      # 临时文件持久化（可选）
+      - w2p-temp:/tmp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  w2p-temp:

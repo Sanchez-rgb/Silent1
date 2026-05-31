@@ -1,0 +1,49 @@
+{
+  "user_info": {
+    "username": "testuser",
+    "blogger_id": "blogger_001",
+    "last_analysis_time": null
+  },
+  "overview": {
+    "average_sentiment_score": 0.2093,
+    "excellent_count": 7,
+    "good_count": 13,
+    "warning_count": 3,
+    "danger_count": 0
+  },
+  "top_best_notes": [
+    {
+      "title": "这款护肤品真的太好用了",
+      "sentiment_score": 0.4234,
+      "note_url": ""
+    },
+    {
+      "title": "这款护肤品真的太好用了",
+      "sentiment_score": 0.3597,
+      "note_url": ""
+    },
+    {
+      "title": "化妆教程：新手也能学会",
+      "sentiment_score": 0.3515,
+      "note_url": ""
+    }
+  ],
+  "top_worst_notes": [
+    {
+      "title": "测试笔记",
+      "sentiment_score": 0.0,
+      "note_url": ""
+    },
+    {
+      "title": "测试笔记",
+      "sentiment_score": 0.0,
+      "note_url": ""
+    },
+    {
+      "title": "测试笔记",
+      "sentiment_score": 0.0,
+      "note_url": ""
+    }
+  ],
+  "ai_suggestions": "根据评论分析，建议您注意产品质量问题，很多用户反馈体验不佳。\n建议加强售后服务，用户对此反应比较强烈。\n可以考虑增加产品说明，很多用户表示不理解如何使用。\n价格方面可以优化，部分用户觉得性价比不高。"
+}

@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word转PDF - 专业文档转换</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .remaining-次数 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .remaining-icon {
+            font-size: 1.2rem;
+        }
+
+        .user-area {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+        }
+
+        .upload-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--border);
+            border-radius: 16px;
+            padding: 4rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #f0f0ff 0%, #e8e8ff 100%);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 2rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+        }
+
+        .file-icon {
+            font-size: 2.5rem;
+            margin-right: 1rem;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .file-size {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .file-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-remove:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .convert-btn {
+            width: 100%;
+            margin-top: 2rem;
+            padding: 1.25rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .pricing-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #f0f0ff 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card.featured::before {
+            content: '推荐';
+            position: absolute;
+            top: 1rem;
+            right: -2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 0.25rem 2.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transform: rotate(45deg);
+        }
+
+        .pricing-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .pricing-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .switch-text {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .switch-text a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .switch-text a:hover {
+            text-decoration: underline;
+        }
+
+        .payment-modal .modal-content {
+            text-align: center;
+        }
+
+        .qr-code {
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+
+        .payment-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .payment-btn {
+            background: var(--success);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-btn:hover {
+            background: #059669;
+            transform: scale(1.05);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-section {
+                order: -1;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+            
+            .pricing-card {
+                padding: 1.5rem;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .success-message h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">📄</div>
+                <span>Word转PDF</span>
+            </div>
+            <div class="remaining-次数" id="remainingDisplay">
+                <span class="remaining-icon">⚡</span>
+                <span id="remainingText">今日剩余: 3次</span>
+            </div>
+            <div class="user-area">
+                <button class="btn btn-outline" id="loginBtn">登录</button>
+                <button class="btn btn-primary" id="registerBtn">注册</button>
+            </div>
+        </header>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <div class="feature-title">极速转换</div>
+                <div class="feature-desc">秒级转换速度，高效处理</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">安全可靠</div>
+                <div class="feature-desc">文件加密传输，保护隐私</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">多端支持</div>
+                <div class="feature-desc">支持电脑和手机访问</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-title">点击或拖拽文件到此处</div>
+                    <div class="upload-hint">
+                        支持 .doc 和 .docx 格式<br>
+                        单文件最大 50MB
+                    </div>
+                    <input type="file" id="fileInput" accept=".doc,.docx">
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <button class="convert-btn btn-primary" id="convertBtn" disabled>
+                    <span>⚡</span>
+                    <span>开始转换</span>
+                </button>
+            </div>
+
+            <div class="pricing-section">
+                <div class="pricing-card">
+                    <div class="pricing-title">免费版</div>
+                    <div class="pricing-price">¥0 <span>/ 永久</span></div>
+                    <ul class="pricing-features">
+                        <li>每天3次转换</li>
+                        <li>无需注册</li>
+                        <li>基础转换功能</li>
+                    </ul>
+                    <button class="pricing-btn btn-outline">当前使用</button>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="pricing-title">月度会员</div>
+                    <div class="pricing-price">¥9.9 <span>/ 月</span></div>
+                    <ul class="pricing-features">
+                        <li>无限次转换</li>
+                        <li>优先转换通道</li>
+                        <li>专属客服支持</li>
+                    </ul>
+                    <button class="pricing-btn btn-primary" onclick="openPayment(9.9, 'monthly')">立即开通</button>
+                </div>
+
+                <div class="pricing-card">
+                    <div class="pricing-title">企业版</div>
+                    <div class="pricing-price">¥99 <span>/ 月</span></div>
+                    <ul class="pricing-features">
+                        <li>API接口调用</li>
+                        <li>独立后台管理</li>
+                        <li>专属技术支持</li>
+                    </ul>
+                    <button class="pricing-btn btn-outline" onclick="openPayment(99, 'enterprise')">企业咨询</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录弹窗 -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('loginModal')">×</button>
+            <div class="modal-title">登录</div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <input type="tel" class="form-input" id="loginPhone" placeholder="请输入手机号" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                </div>
+                <button type="submit" class="submit-btn">登录</button>
+                <div class="switch-text">
+                    还没有账号？<a onclick="switchToRegister()">立即注册</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 注册弹窗 -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('registerModal')">×</button>
+            <div class="modal-title">注册</div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <input type="tel" class="form-input" id="registerPhone" placeholder="请输入手机号" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">验证码</label>
+                    <input type="text" class="form-input" id="registerCode" placeholder="请输入验证码" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设置密码</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="请设置密码" required>
+                </div>
+                <button type="submit" class="submit-btn">注册</button>
+                <div class="switch-text">
+                    已有账号？<a onclick="switchToLogin()">立即登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 支付弹窗 -->
+    <div class="modal payment-modal" id="paymentModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('paymentModal')">×</button>
+            <div class="modal-title">支付</div>
+            <div class="payment-amount" id="paymentAmount">¥9.9</div>
+            <div class="qr-code">
+                <img id="qrCodeImg" src="" alt="支付二维码">
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">请使用支付宝或微信扫描支付</p>
+            <button class="payment-btn" onclick="confirmPayment()">我已支付</button>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">正在转换文件...</div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let currentPayment = null;
+        let userToken = localStorage.getItem('userToken');
+        let userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRemainingDisplay();
+            initUploadZone();
+            initButtons();
+        });
+
+        function initUploadZone() {
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadZone.addEventListener('click', () => fileInput.click());
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        function initButtons() {
+            document.getElementById('loginBtn').addEventListener('click', () => openModal('loginModal'));
+            document.getElementById('registerBtn').addEventListener('click', () => openModal('registerModal'));
+            document.getElementById('convertBtn').addEventListener('click', convertFiles);
+            
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        }
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.name.match(/\.(doc|docx)$/i)) {
+                    selectedFiles.push(file);
+                }
+            }
+            updateFileList();
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <div class="file-icon">📄</div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                    </div>
+                    <button class="file-remove" onclick="removeFile(${index})">删除</button>
+                `;
+                fileList.appendChild(div);
+            });
+
+            document.getElementById('convertBtn').disabled = selectedFiles.length === 0;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        async function convertFiles() {
+            if (selectedFiles.length === 0) return;
+
+            document.getElementById('loadingOverlay').classList.add('active');
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch('/api/convert', {
+                    method: 'POST',
+                    headers: userToken ? { 'Authorization': `Bearer ${userToken}` } : {},
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = selectedFiles[0].name.replace(/\.(doc|docx)$/i, '.pdf');
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    selectedFiles = [];
+                    updateFileList();
+                    updateRemainingDisplay();
+                    
+                    alert('转换成功！');
+                } else {
+                    const error = await response.json();
+                    alert('转换失败: ' + (error.detail || '未知错误'));
+                }
+            } catch (error) {
+                alert('转换失败: ' + error.message);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+        }
+
+        function updateRemainingDisplay() {
+            const remainingText = document.getElementById('remainingText');
+            
+            if (userInfo && userInfo.is_vip) {
+                remainingText.textContent = '会员无限次';
+                document.getElementById('remainingDisplay').style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            } else {
+                const remaining = parseInt(localStorage.getItem('remainingCount') || '3');
+                remainingText.textContent = `今日剩余: ${remaining}次`;
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function switchToRegister() {
+            closeModal('loginModal');
+            openModal('registerModal');
+        }
+
+        function switchToLogin() {
+            closeModal('registerModal');
+            openModal('loginModal');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('userToken', data.token);
+                    localStorage.setItem('userInfo', JSON.stringify(data.user));
+                    userToken = data.token;
+                    userInfo = data.user;
+                    closeModal('loginModal');
+                    updateRemainingDisplay();
+                    alert('登录成功！');
+                } else {
+                    alert(data.detail || '登录失败');
+                }
+            } catch (error) {
+                alert('登录失败: ' + error.message);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('registerPhone').value;
+            const code = document.getElementById('registerCode').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, code, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('注册成功！');
+                    switchToLogin();
+                } else {
+                    alert(data.detail || '注册失败');
+                }
+            } catch (error) {
+                alert('注册失败: ' + error.message);
+            }
+        }
+
+        async function openPayment(amount, type) {
+            currentPayment = { amount, type };
+            
+            document.getElementById('paymentAmount').textContent = `¥${amount}`;
+            
+            // 生成模拟二维码
+            const qrImg = document.getElementById('qrCodeImg');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAY${Date.now()}`;
+            
+            openModal('paymentModal');
+        }
+
+        async function confirmPayment() {
+            if (!currentPayment) return;
+
+            try {
+                const response = await fetch('/api/payment_callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order_id: `ORD${Date.now()}`,
+                        amount: currentPayment.amount,
+                        status: 'success'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeModal('paymentModal');
+                    
+                    if (currentPayment.amount === 9.9 || currentPayment.amount === 99) {
+                        localStorage.setItem('userInfo', JSON.stringify({
+                            is_vip: true,
+                            vip_type: currentPayment.type
+                        }));
+                        userInfo = { is_vip: true, vip_type: currentPayment.type };
+                        updateRemainingDisplay();
+                    }
+                    
+                    alert(data.message || '支付成功！');
+                } else {
+                    alert(data.message || '支付失败');
+                }
+            } catch (error) {
+                alert('支付处理失败: ' + error.message);
+            }
+
+            currentPayment = null;
+        }
+
+        // 点击弹窗外部关闭
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

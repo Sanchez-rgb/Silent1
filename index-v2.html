@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书情感分析平台 | 异步任务架构</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #ff2442;
+            --primary-light: #ff4d6a;
+            --secondary: #1a1a2e;
+            --accent: #16213e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e5e7eb;
+        }
+
+        .header {
+            background: rgba(15, 15, 35, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 36, 66, 0.2);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .username {
+            font-weight: 600;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 36, 66, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .panel {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 28px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .panel-subtitle {
+            font-size: 14px;
+            color: var(--gray-300);
+            margin-top: 4px;
+        }
+
+        /* 登录/注册表单 */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-300);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            color: #fff;
+            border-bottom-color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--gray-300);
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(15, 15, 35, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 14px 18px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 36, 66, 0.1);
+        }
+
+        textarea.form-input {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            margin-top: 24px;
+            padding: 24px;
+            background: rgba(15, 15, 35, 0.4);
+            border-radius: 12px;
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .progress-bar.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+        }
+
+        .progress-bar.error {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray-300);
+            font-size: 14px;
+        }
+
+        .progress-message {
+            margin-top: 8px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(15, 15, 35, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 36, 66, 0.3);
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 28px;
+        }
+
+        .stat-icon-total {
+            background: linear-gradient(135deg, rgba(255, 36, 66, 0.2), rgba(255, 36, 66, 0.1));
+            color: var(--primary);
+        }
+
+        .stat-icon-positive {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            color: var(--success);
+        }
+
+        .stat-icon-neutral {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+            color: var(--warning);
+        }
+
+        .stat-icon-negative {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray-300);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Cookie 教程链接 */
+        .cookie-help {
+            color: var(--primary-light);
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: underline;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .cookie-help:hover {
+            color: var(--primary);
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 15, 35, 0.4);
+            position: sticky;
+            top: 0;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--gray-300);
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .disclaimer {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .disclaimer-title {
+            color: var(--danger);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .disclaimer-text {
+            color: var(--gray-300);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .tutorial-step {
+            margin-bottom: 20px;
+        }
+
+        .tutorial-step-title {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tutorial-step-number {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .tutorial-step-text {
+            color: var(--gray-300);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #e5e7eb;
+            overflow-x: auto;
+        }
+
+        .screenshot-hint {
+            background: rgba(107, 114, 128, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            color: var(--gray-300);
+            font-size: 13px;
+            margin: 10px 0;
+        }
+
+        /* 笔记列表 */
+        .notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .note-card {
+            background: rgba(15, 15, 35, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .note-card.positive::before {
+            background: var(--success);
+        }
+
+        .note-card.neutral::before {
+            background: var(--warning);
+        }
+
+        .note-card.negative::before {
+            background: var(--danger);
+        }
+
+        .note-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .note-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .note-url {
+            color: var(--gray-300);
+            font-size: 13px;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+
+        .note-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--gray-300);
+        }
+
+        /* 提示消息 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--gray-800);
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* 图表 */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-300);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: var(--gray-300);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .main-container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📕</div>
+                <div>
+                    <div class="logo-text">小红书情感分析平台</div>
+                    <div class="panel-subtitle">异步任务架构 · v2.0</div>
+                </div>
+            </div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span class="username" id="usernameDisplay">用户</span>
+                <button class="btn btn-secondary btn-small" onclick="logout()">
+                    退出登录
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- 登录/注册页面 -->
+        <div id="authPage">
+            <div class="auth-container">
+                <div class="auth-box">
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" onclick="switchAuthTab('login')">登录</div>
+                        <div class="auth-tab" onclick="switchAuthTab('register')">注册</div>
+                    </div>
+                    <div class="panel">
+                        <div id="loginForm">
+                            <div class="form-group">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">密码</label>
+                                <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码">
+                            </div>
+                            <button class="btn btn-primary" onclick="login()" style="width: 100%;">
+                                登录
+                            </button>
+                        </div>
+                        <div id="registerForm" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-input" id="registerUsername" placeholder="请输入用户名">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">密码</label>
+                                <input type="password" class="form-input" id="registerPassword" placeholder="请输入密码">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">博主ID（可选）</label>
+                                <input type="text" class="form-input" id="registerBloggerId" placeholder="请输入小红书博主ID">
+                            </div>
+                            <button class="btn btn-primary" onclick="register()" style="width: 100%;">
+                                注册
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主应用页面 -->
+        <div id="appPage" style="display: none;">
+            <!-- 用户设置 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">⚙️ 用户设置</div>
+                        <div class="panel-subtitle">配置博主ID和小红书Cookie以提升爬取成功率</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">博主ID</label>
+                    <input type="text" class="form-input" id="bloggerId" placeholder="请输入小红书博主ID">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">小红书Cookie（可选，大幅提升成功率）</label>
+                    <textarea class="form-input" id="xhsCookie" placeholder="从浏览器开发者工具复制Cookie粘贴到这里"></textarea>
+                    <div class="cookie-help" onclick="showCookieTutorial()">
+                        📖 如何获取Cookie？
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="saveUserSettings()">
+                    保存设置
+                </button>
+            </div>
+
+            <!-- 爬虫任务 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">🔍 爬取任务</div>
+                        <div class="panel-subtitle">异步爬取博主所有笔记和评论</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="startCrawlBtn" onclick="startCrawl()">
+                    🚀 开始爬取我的所有笔记
+                </button>
+                <div id="progressContainer" style="display: none;" class="progress-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="progressText">0 / 0</span>
+                        <span id="progressPercentage">0%</span>
+                    </div>
+                    <div class="progress-message" id="progressMessage">准备中...</div>
+                    <div style="margin-top: 16px; display: flex; gap: 12px;">
+                        <button class="btn btn-secondary" id="viewReportBtn" style="display: none;" onclick="viewReport()">
+                            📊 查看报告
+                        </button>
+                        <button class="btn btn-secondary" id="retryBtn" style="display: none;" onclick="retryCrawl()">
+                            🔄 重试
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 仪表盘 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">📊 数据分析</div>
+                        <div class="panel-subtitle">笔记情感分布概览</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshDashboard()">
+                        刷新数据
+                    </button>
+                </div>
+                <div id="dashboardContent">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-total">📄</div>
+                            <div class="stat-value" id="totalNotes">0</div>
+                            <div class="stat-label">总笔记数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-positive">😊</div>
+                            <div class="stat-value" id="positiveNotes">0</div>
+                            <div class="stat-label">优秀笔记</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-neutral">😐</div>
+                            <div class="stat-value" id="neutralNotes">0</div>
+                            <div class="stat-label">良好笔记</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-negative">😔</div>
+                            <div class="stat-value" id="negativeNotes">0</div>
+                            <div class="stat-label">预警笔记</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 笔记列表 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">📝 笔记列表</div>
+                        <div class="panel-subtitle" id="notesCount">共 0 条笔记</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportReport()">
+                        📥 导出报告
+                    </button>
+                </div>
+                <div id="notesContainer" class="notes-container">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-icon">📝</div>
+                        <div class="empty-title">暂无笔记数据</div>
+                        <div class="empty-desc">开始爬取笔记吧</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 全局变量
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let currentTaskId = null;
+        let pollInterval = null;
+        let sentimentChart = null;
+        let dashboardData = null;
+
+        const API_BASE = 'http://localhost:8000';
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token) {
+                loadUserInfo();
+            } else {
+                showAuthPage();
+            }
+            initChart();
+        });
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 切换认证标签
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+
+            if (tab === 'login') {
+                document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+            } else {
+                document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
+                document.getElementById('registerForm').style.display = 'block';
+            }
+        }
+
+        // 注册
+        async function register() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const bloggerId = document.getElementById('registerBloggerId').value.trim();
+
+            if (!username || !password) {
+                showToast('请填写用户名和密码');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, blogger_id: bloggerId })
+                });
+
+                if (!response.ok) {
+                    throw new Error('注册失败');
+                }
+
+                showToast('✅ 注册成功！请登录');
+                switchAuthTab('login');
+                document.getElementById('loginUsername').value = username;
+            } catch (error) {
+                console.error(error);
+                showToast('❌ 注册失败，请检查用户名是否已存在');
+            }
+        }
+
+        // 登录
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                showToast('请填写用户名和密码');
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('登录失败');
+                }
+
+                const data = await response.json();
+                token = data.access_token;
+                localStorage.setItem('token', token);
+                showToast('✅ 登录成功！');
+                loadUserInfo();
+            } catch (error) {
+                console.error(error);
+                showToast('❌ 登录失败，请检查用户名和密码');
+            }
+        }
+
+        // 登出
+        function logout() {
+            token = null;
+            localStorage.removeItem('token');
+            currentUser = null;
+            showAuthPage();
+            showToast('已退出登录');
+        }
+
+        // 显示认证页面
+        function showAuthPage() {
+            document.getElementById('authPage').style.display = 'block';
+            document.getElementById('appPage').style.display = 'none';
+        }
+
+        // 显示应用页面
+        function showAppPage() {
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('appPage').style.display = 'block';
+        }
+
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('未授权');
+                }
+
+                currentUser = await response.json();
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+                document.getElementById('bloggerId').value = currentUser.blogger_id || '';
+                document.getElementById('xhsCookie').value = currentUser.xhs_cookie || '';
+                document.getElementById('userInfo').style.display = 'flex';
+
+                showAppPage();
+                loadMyTasks();
+                refreshDashboard();
+            } catch (error) {
+                console.error(error);
+                logout();
+            }
+        }
+
+        // 保存用户设置
+        async function saveUserSettings() {
+            const bloggerId = document.getElementById('bloggerId').value.trim();
+            const xhsCookie = document.getElementById('xhsCookie').value.trim();
+
+            try {
+                const response = await fetch(`${API_BASE}/users/me`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ blogger_id: bloggerId, xhs_cookie: xhsCookie })
+                });
+
+                if (!response.ok) {
+                    throw new Error('保存失败');
+                }
+
+                currentUser.blogger_id = bloggerId;
+                currentUser.xhs_cookie = xhsCookie;
+                showToast('✅ 设置已保存！');
+            } catch (error) {
+                console.error(error);
+                showToast('❌ 保存失败');
+            }
+        }
+
+        // 开始爬取
+        async function startCrawl() {
+            if (!currentUser.blogger_id) {
+                showToast('❌ 请先设置博主ID');
+                return;
+            }
+
+            const btn = document.getElementById('startCrawlBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 正在启动...';
+
+            try {
+                const response = await fetch(`${API_BASE}/crawl/my-notes`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('启动失败');
+                }
+
+                const data = await response.json();
+                currentTaskId = data.task_id;
+
+                showToast('✅ 爬虫任务已启动！');
+                startPolling();
+            } catch (error) {
+                console.error(error);
+                showToast('❌ 启动失败，请检查服务是否运行');
+                btn.disabled = false;
+                btn.textContent = '🚀 开始爬取我的所有笔记';
+            }
+        }
+
+        // 开始轮询任务状态
+        function startPolling() {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('startCrawlBtn').style.display = 'none';
+            document.getElementById('viewReportBtn').style.display = 'none';
+            document.getElementById('retryBtn').style.display = 'none';
+
+            pollInterval = setInterval(pollTaskStatus, 2000);
+            pollTaskStatus();
+        }
+
+        // 轮询任务状态
+        async function pollTaskStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/task/${currentTaskId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('查询失败');
+                }
+
+                const data = await response.json();
+                updateProgressUI(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 更新进度UI
+        function updateProgressUI(data) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const progressMessage = document.getElementById('progressMessage');
+
+            let status = data.celery_status || 'PENDING';
+            let dbStatus = data.db_status;
+            let current = data.current_note || 0;
+            let total = data.total_notes || 0;
+            let percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+
+            // 状态处理
+            if (status === 'SUCCESS' || dbStatus === 'completed') {
+                clearInterval(pollInterval);
+                progressBar.style.width = '100%';
+                progressBar.className = 'progress-bar';
+                progressText.textContent = `${total} / ${total}`;
+                progressPercentage.textContent = '100%';
+                progressMessage.textContent = '✅ 任务完成！';
+                document.getElementById('viewReportBtn').style.display = 'inline-flex';
+                refreshDashboard();
+            } else if (status === 'FAILURE' || dbStatus === 'failed') {
+                clearInterval(pollInterval);
+                progressBar.style.width = '100%';
+                progressBar.className = 'progress-bar error';
+                progressText.textContent = `${current} / ${total}`;
+                progressPercentage.textContent = `${percentage}%`;
+                progressMessage.textContent = '❌ 任务失败，请重试';
+                document.getElementById('retryBtn').style.display = 'inline-flex';
+            } else {
+                progressBar.style.width = `${percentage}%`;
+                progressBar.className = 'progress-bar';
+                progressText.textContent = `${current} / ${total}`;
+                progressPercentage.textContent = `${percentage}%`;
+                progressMessage.textContent = `⏳ 正在处理中... (${current}/${total})`;
+            }
+        }
+
+        // 重试
+        function retryCrawl() {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('startCrawlBtn').style.display = 'inline-flex';
+            document.getElementById('startCrawlBtn').disabled = false;
+            document.getElementById('startCrawlBtn').textContent = '🚀 开始爬取我的所有笔记';
+            currentTaskId = null;
+        }
+
+        // 查看报告
+        function viewReport() {
+            exportReport();
+        }
+
+        // 导出报告
+        function exportReport() {
+            window.open(`${API_BASE}/report`, '_blank');
+        }
+
+        // 加载我的任务
+        async function loadMyTasks() {
+            try {
+                const response = await fetch(`${API_BASE}/tasks/my`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) return;
+                const tasks = await response.json();
+
+                if (tasks.length > 0) {
+                    const latest = tasks[0];
+                    if (['pending', 'running'].includes(latest.status)) {
+                        currentTaskId = latest.task_id;
+                        startPolling();
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 刷新仪表盘
+        async function refreshDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('加载失败');
+                }
+
+                dashboardData = await response.json();
+                renderDashboard();
+                loadNotesList();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 渲染仪表盘
+        function renderDashboard() {
+            if (!dashboardData) return;
+
+            const overview = dashboardData.overview || {};
+            const total = overview.excellent_count + overview.good_count + overview.warning_count + overview.danger_count;
+
+            document.getElementById('totalNotes').textContent = total;
+            document.getElementById('positiveNotes').textContent = overview.excellent_count + overview.good_count;
+            document.getElementById('neutralNotes').textContent = overview.warning_count;
+            document.getElementById('negativeNotes').textContent = overview.danger_count;
+
+            if (sentimentChart) {
+                sentimentChart.data.datasets[0].data = [
+                    overview.excellent_count + overview.good_count,
+                    overview.warning_count,
+                    overview.danger_count
+                ];
+                sentimentChart.update();
+            }
+        }
+
+        // 加载笔记列表
+        async function loadNotesList() {
+            try {
+                const response = await fetch(`${API_BASE}/notes/my`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('加载失败');
+                }
+
+                const notes = await response.json();
+                renderNotesList(notes);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 渲染笔记列表
+        function renderNotesList(notes) {
+            const container = document.getElementById('notesContainer');
+            const emptyState = document.getElementById('emptyState');
+            const notesCount = document.getElementById('notesCount');
+
+            if (!notes || notes.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                notesCount.textContent = '共 0 条笔记';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            notesCount.textContent = `共 ${notes.length} 条笔记`;
+
+            container.innerHTML = notes.map(note => `
+                <div class="note-card">
+                    <div class="note-title">${escapeHtml(note.note_title || '无标题')}</div>
+                    <div class="note-url">${escapeHtml(note.note_url || '')}</div>
+                    <div class="note-meta">
+                        <span>👍 ${note.like_count || 0}</span>
+                        <span>💬 ${note.comment_count || 0}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 初始化图表
+        function initChart() {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            sentimentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['正面', '中性', '负面'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e5e7eb',
+                                padding: 20,
+                                font: {
+                                    size: 13,
+                                    family: 'Inter'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cookie 教程弹窗
+        function showCookieTutorial() {
+            document.getElementById('cookieTutorialModal').classList.add('show');
+        }
+
+        function closeCookieTutorial() {
+            document.getElementById('cookieTutorialModal').classList.remove('show');
+        }
+
+        // 点击遮罩层关闭
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('cookieTutorialModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeCookieTutorial();
+                }
+            });
+        });
+    </script>
+
+    <!-- Cookie 教程弹窗 -->
+    <div class="modal-overlay" id="cookieTutorialModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📖 如何获取小红书 Cookie</div>
+                <button class="modal-close" onclick="closeCookieTutorial()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="disclaimer">
+                    <div class="disclaimer-title">⚠️ 免责声明</div>
+                    <div class="disclaimer-text">
+                        本工具仅供学习和个人研究使用。Cookie 是您的个人敏感信息，请妥善保管，切勿与他人分享。
+                        使用本工具所产生的一切责任由用户自行承担，与开发者无关。请遵守小红书相关服务条款。
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="tutorial-step-title">
+                        <span class="tutorial-step-number">1</span>
+                        打开小红书网页版
+                    </div>
+                    <div class="tutorial-step-text">
+                        在浏览器中打开小红书网页版（https://www.xiaohongshu.com），并登录您的账号。
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="tutorial-step-title">
+                        <span class="tutorial-step-number">2</span>
+                        打开开发者工具
+                    </div>
+                    <div class="tutorial-step-text">
+                        按 F12 键（Windows/Linux）或 Cmd + Option + I（Mac）打开开发者工具。
+                        <br>或者右键点击页面 → 「检查」或「审查元素」。
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="tutorial-step-title">
+                        <span class="tutorial-step-number">3</span>
+                        切换到 Network 标签
+                    </div>
+                    <div class="tutorial-step-text">
+                        在开发者工具中，点击顶部的「Network」（网络）标签。
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="tutorial-step-title">
+                        <span class="tutorial-step-number">4</span>
+                        刷新页面并查看请求
+                    </div>
+                    <div class="tutorial-step-text">
+                        点击浏览器刷新按钮（或按 F5），然后在 Network 标签中找到任意请求。
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="tutorial-step-title">
+                        <span class="tutorial-step-number">5</span>
+                        复制 Cookie
+                    </div>
+                    <div class="tutorial-step-text">
+                        点击请求，在右侧的「Headers」标签下找到「Request Headers」，
+                        <br>然后找到「cookie」字段，点击右键复制整个 cookie 的值。
+                    </div>
+                    <div class="screenshot-hint">
+                        💡 提示：Cookie 通常很长，包含多个字段，例如 a1=...; webId=...; ...
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="tutorial-step-title">
+                        <span class="tutorial-step-number">6</span>
+                        粘贴到输入框
+                    </div>
+                    <div class="tutorial-step-text">
+                        将复制的 Cookie 完整粘贴到输入框中，点击「保存设置」即可。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
