@@ -1054,8 +1054,9 @@
         }
 
         function renderResults() {
-            document.getElementById('resultsCard').style.display = 'block';
-            const resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const resultsCard = document.getElementById('resultsCard');
+            resultsCard.style.display = 'block';
+            resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             const tabsContainer = document.getElementById('versionTabs');
             tabsContainer.innerHTML = '';
@@ -1221,27 +1222,33 @@
             if (histories.length === 0) {
                 list.innerHTML = `<div style="text-align: center; color: #98A2B3; padding: 40px;">暂无历史记录，快去生成文案吧！</div>`;
             } else {
-                list.innerHTML = histories.map(h => `
-                    <div class="history-list-item" onclick="loadHistory(${JSON.stringify(h).replace(/"/g, '&quot;')}">
+                list.innerHTML = histories.map((h, index) => `
+                    <div class="history-list-item" onclick="loadHistory(${index})">
                         <div class="history-title">${h.title}</div>
                         <div class="history-date">${h.created_at}</div>
                         <div style="display: flex; gap: 8px; margin-top: 12px;">
-                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); loadHistory(${JSON.stringify(h).replace(/"/g, '&quot;')}">加载</button>
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); loadHistory(${index})">加载</button>
                             <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); deleteHistory(${h.id})">删除</button>
                         </div>
                     </div>
                 `).join('');
+                // 保存 histories 到全局变量以便 loadHistory 访问
+                window.historyData = histories;
             }
             document.getElementById('historyModal').classList.add('active');
         }
 
-        function loadHistory(h) {
-            generatedVersions = [h];
-            currentVersion = 0;
-            renderResults();
-            closeModal('historyModal');
-            showToast('已加载历史记录');
+        function loadHistory(index) {
+            if (window.historyData && window.historyData[index]) {
+                generatedVersions = [window.historyData[index]];
+                currentVersion = 0;
+                renderResults();
+                closeModal('historyModal');
+                showToast('已加载历史记录');
+            }
         }
+
+
 
         async function deleteHistory(id) {
             if (!currentUser) return;
