@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, AsyncGenerator
 import sqlite3
 import os
 import re
 import random
+import json
 from datetime import datetime, timedelta
 import httpx
 from contextlib import contextmanager
@@ -121,7 +122,7 @@ def optimize_format(text: str) -> str:
                     result.append(sentence)
     return '\n\n'.join(result)
 
-async def generate_with_deepseek(prompt: str, api_key: str) -> str:
+async def generate_with_deepseek(prompt: str, api_key: str, stream: bool = False) -> str:
     url = "https://api.deepseek.com/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -134,12 +135,15 @@ async def generate_with_deepseek(prompt: str, api_key: str) -> str:
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.8,
-        "max_tokens": 2000
+        "max_tokens": 2000,
+        "stream": stream
     }
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(url, headers=headers, json=data)
             response.raise_for_status()
+            if stream:
+                return response
             result = response.json()
             return result["choices"][0]["message"]["content"]
     except Exception as e:
@@ -195,16 +199,21 @@ def parse_response(response: str) -> dict:
             content_line = line.replace("正文：", "").strip()
             if content_line:
                 content = content_line
-        elif line.startswith("标签："):
-            tags = line.replace("标签：", "").strip()
+        elif line.startswith("标签：") or line.startswith("#"):
+            if line.startswith("标签："):
+                tags = line.replace("标签：", "").strip()
+            else:
+                tags = line.strip()
             current_section = None
         else:
-            # 如果在正文部分，继续追加
             if current_section == "content":
                 if content:
                     content += "\n" + line
                 else:
                     content = line
+    
+    if not tags:
+        tags = "#小红书 #文案 #分享 #好物推荐"
     
     return {"title": title, "content": content, "tags": tags}
 
@@ -303,6 +312,77 @@ async def delete_history(user_id: int, history_id: int):
         )
         conn.commit()
         return {"success": True}
+
+async def generate_with_deepseek_stream(prompt: str, api_key: str, version: int) -> AsyncGenerator[str, None]:
+    """流式生成单个版本的文案并通过 SSE 推送"""
+    url = "https://api.deepseek.com/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "你是一个专业的小红书文案写手，擅长创作吸引人的标题和正文。"},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.8,
+        "max_tokens": 2000,
+        "stream": True
+    }
+    
+    yield f"data: {json.dumps({'type': 'start', 'version': version})}\n\n"
+    
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            async with client.stream("POST", url, headers=headers, json=data) as response:
+                response.raise_for_status()
+                full_text = ""
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            data_json = json.loads(data_str)
+                            if "choices" in data_json and len(data_json["choices"]) > 0:
+                                delta = data_json["choices"][0].get("delta", {})
+                                content = delta.get("content", "")
+                                if content:
+                                    full_text += content
+                                    yield f"data: {json.dumps({'type': 'chunk', 'version': version, 'content': content})}\n\n"
+                        except json.JSONDecodeError:
+                            continue
+                
+                parsed = parse_response(full_text)
+                yield f"data: {json.dumps({'type': 'complete', 'version': version, 'data': parsed})}\n\n"
+    
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'version': version, 'message': str(e)})}\n\n"
+
+@app.post("/api/generate-stream")
+async def generate_stream(request: GenerateRequest):
+    """SSE 流式生成接口"""
+    api_key = os.getenv("DEEPSEEK_API_KEY", "sk-a6d87e4a1c3d4956bb3c42a4c37dd47c")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="请提供 DeepSeek API Key")
+    
+    async def event_generator():
+        for i in range(1, 4):
+            prompt = build_prompt(request.keywords, request.selling_points, request.target_audience, request.tone, i)
+            async for event in generate_with_deepseek_stream(prompt, api_key, i):
+                yield event
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 if __name__ == "__main__":
     import os
