@@ -1096,9 +1096,19 @@
                     <div class="copy-content" id="tags-${currentVersion}">${content.tags}</div>
                 </div>
                 <div style="margin-top: 24px;">
-                    <button class="btn btn-primary btn-full" onclick="saveHistory()">💾 保存到历史记录</button>
+                    <button class="btn btn-primary btn-full" onclick="copyFullContent(${currentVersion})" style="background: linear-gradient(135deg, #12B76A 0%, #10B981 100%); margin-bottom: 12px;">
+                        📋 一键复制完整文案
+                    </button>
+                    <button class="btn btn-secondary btn-full" onclick="saveHistory()">💾 保存到历史记录</button>
                 </div>
             `;
+        }
+
+        function copyFullContent(versionIndex) {
+            const content = generatedVersions[versionIndex];
+            const fullText = `${content.title}\n\n${content.content}\n\n${content.tags}`;
+            navigator.clipboard.writeText(fullText);
+            showToast('✅ 已复制完整文案！');
         }
 
         function copyText(elementId) {
@@ -1218,24 +1228,36 @@
             }
             const response = await fetch(`/api/users/${currentUser.user_id}/history`);
             const histories = await response.json();
+            // 按时间倒序排列
+            const sortedHistories = histories.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             const list = document.getElementById('historyList');
-            if (histories.length === 0) {
+            if (sortedHistories.length === 0) {
                 list.innerHTML = `<div style="text-align: center; color: #98A2B3; padding: 40px;">暂无历史记录，快去生成文案吧！</div>`;
             } else {
-                list.innerHTML = histories.map((h, index) => `
+                list.innerHTML = sortedHistories.map((h, index) => `
                     <div class="history-list-item" onclick="loadHistory(${index})">
                         <div class="history-title">${h.title}</div>
                         <div class="history-date">${h.created_at}</div>
                         <div style="display: flex; gap: 8px; margin-top: 12px;">
-                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); loadHistory(${index})">加载</button>
-                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); deleteHistory(${h.id})">删除</button>
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); loadHistory(${index})">📋 加载</button>
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); copyHistoryContent(${index})">📋 直接复制</button>
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); deleteHistory(${h.id})">🗑️ 删除</button>
                         </div>
                     </div>
                 `).join('');
                 // 保存 histories 到全局变量以便 loadHistory 访问
-                window.historyData = histories;
+                window.historyData = sortedHistories;
             }
             document.getElementById('historyModal').classList.add('active');
+        }
+
+        function copyHistoryContent(index) {
+            if (window.historyData && window.historyData[index]) {
+                const h = window.historyData[index];
+                const fullText = `${h.title}\n\n${h.content}\n\n${h.tags}`;
+                navigator.clipboard.writeText(fullText);
+                showToast('✅ 已复制完整文案！');
+            }
         }
 
         function loadHistory(index) {
