@@ -99,6 +99,13 @@ def init_db():
                 FOREIGN KEY (used_by) REFERENCES users (id)
             )
         ''')
+        
+        # 添加新列（如果不存在）
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN vip_expire_at TIMESTAMP")
+        except:
+            pass
+        
         conn.commit()
 
 init_db()
