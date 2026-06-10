@@ -72,6 +72,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 phone TEXT UNIQUE NOT NULL,
                 is_vip BOOLEAN DEFAULT 0,
+                vip_expire_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -84,6 +85,18 @@ def init_db():
                 tags TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS activation_codes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT UNIQUE NOT NULL,
+                is_used BOOLEAN DEFAULT 0,
+                used_by INTEGER,
+                used_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP,
+                FOREIGN KEY (used_by) REFERENCES users (id)
             )
         ''')
         conn.commit()
@@ -221,6 +234,10 @@ def parse_response(response: str) -> dict:
 async def read_root():
     return FileResponse("index.html")
 
+@app.get("/admin")
+async def read_admin():
+    return FileResponse("admin.html")
+
 @app.post("/api/generate")
 async def generate(request: GenerateRequest):
     # 强制使用配置的 API Key
@@ -270,6 +287,112 @@ async def subscribe(user_id: int):
         cursor.execute("UPDATE users SET is_vip = 1 WHERE id = ?", (user_id,))
         conn.commit()
         return {"success": True, "is_vip": True}
+
+class ActivateRequest(BaseModel):
+    user_id: int
+    code: str
+
+@app.post("/api/activate")
+async def activate_vip(request: ActivateRequest):
+    """使用激活码开通VIP"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        # 查找激活码
+        cursor.execute("SELECT * FROM activation_codes WHERE code = ?", (request.code,))
+        activation = cursor.fetchone()
+        
+        if not activation:
+            raise HTTPException(status_code=400, detail="激活码不存在")
+        
+        if activation["is_used"]:
+            raise HTTPException(status_code=400, detail="激活码已被使用")
+        
+        # 检查是否过期
+        if activation["expires_at"]:
+            from datetime import datetime
+            if datetime.now() > datetime.fromisoformat(activation["expires_at"]):
+                raise HTTPException(status_code=400, detail="激活码已过期")
+        
+        # 标记激活码已使用
+        cursor.execute(
+            "UPDATE activation_codes SET is_used = 1, used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (request.user_id, activation["id"])
+        )
+        
+        # 设置用户为VIP（有效期1个月）
+        from datetime import datetime, timedelta
+        expire_at = datetime.now() + timedelta(days=30)
+        cursor.execute(
+            "UPDATE users SET is_vip = 1, vip_expire_at = ? WHERE id = ?",
+            (expire_at.isoformat(), request.user_id)
+        )
+        
+        conn.commit()
+        
+        return {
+            "success": True,
+            "message": "激活成功！VIP有效期至" + expire_at.strftime("%Y年%m月%d日"),
+            "expire_at": expire_at.isoformat()
+        }
+
+@app.post("/api/admin/generate-codes")
+async def generate_activation_codes(count: int = 10):
+    """生成激活码（管理员接口）"""
+    import secrets
+    import string
+    
+    codes = []
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        for _ in range(count):
+            # 生成16位随机激活码
+            code = 'VIP' + ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(13))
+            
+            # 有效期30天
+            from datetime import datetime, timedelta
+            expires_at = datetime.now() + timedelta(days=30)
+            
+            cursor.execute(
+                "INSERT INTO activation_codes (code, expires_at) VALUES (?, ?)",
+                (code, expires_at.isoformat())
+            )
+            codes.append(code)
+        
+        conn.commit()
+    
+    return {
+        "success": True,
+        "codes": codes,
+        "message": f"成功生成 {count} 个激活码"
+    }
+
+@app.get("/api/admin/codes")
+async def list_activation_codes():
+    """查看所有激活码（管理员接口）"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT ac.*, u.phone as used_by_phone 
+            FROM activation_codes ac 
+            LEFT JOIN users u ON ac.used_by = u.id 
+            ORDER BY ac.created_at DESC
+        """)
+        codes = cursor.fetchall()
+        return [
+            {
+                "id": c["id"],
+                "code": c["code"],
+                "is_used": bool(c["is_used"]),
+                "used_by_phone": c["used_by_phone"],
+                "used_at": c["used_at"],
+                "created_at": c["created_at"],
+                "expires_at": c["expires_at"]
+            }
+            for c in codes
+        ]
+
 
 @app.post("/api/users/{user_id}/history")
 async def save_history(user_id: int, request: SaveHistoryRequest):

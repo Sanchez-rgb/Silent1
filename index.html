@@ -1006,11 +1006,83 @@
                     <span>✅</span>
                     <span>专属客服支持</span>
                 </div>
+                
+                <!-- 支付方式选择 -->
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+                    <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">选择开通方式</h4>
+                    
+                    <!-- 激活码开通 -->
+                    <div id="activationSection" style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text-secondary);">
+                            🎫 输入激活码开通
+                        </label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="activationCode" placeholder="请输入激活码" style="flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"/>
+                            <button onclick="activateVip()" style="padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+                                激活
+                            </button>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">激活码有效期为1个月，开通后不可退款</p>
+                    </div>
+                    
+                    <!-- 分隔符 -->
+                    <div style="display: flex; align-items: center; gap: 16px; margin: 20px 0;">
+                        <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">或者</span>
+                        <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                    </div>
+                    
+                    <!--扫码支付-->
+                    <div>
+                        <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--text-secondary);">
+                            💳 扫码支付开通
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="border: 2px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="showPaymentQR('wechat')" id="wechatPayBtn">
+                                <div style="font-size: 32px; margin-bottom: 8px;">💚</div>
+                                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">微信支付</div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">¥9.9</div>
+                            </div>
+                            <div style="border: 2px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="showPaymentQR('alipay')" id="alipayBtn">
+                                <div style="font-size: 32px; margin-bottom: 8px;">🔵</div>
+                                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">支付宝</div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">¥9.9</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('vipModal')">取消</button>
-                <button class="btn btn-primary" onclick="subscribe()" style="background: linear-gradient(135deg, #FFD700 0%, #FFB347 100%); color: #1F2937;">
-                    立即开通
+                <button class="btn btn-secondary" onclick="closeModal('vipModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 支付二维码 Modal -->
+    <div class="modal-backdrop" id="paymentQRModal">
+        <div class="modal-dialog" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="paymentTitle">💳 扫码支付</h3>
+                <button class="modal-close" onclick="closePaymentQR()">×</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                    <div id="paymentQRCode" style="width: 200px; height: 200px; margin: 0 auto; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-muted);">
+                        加载中...
+                    </div>
+                </div>
+                <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <p style="font-size: 14px; color: #92400E; margin: 0; font-weight: 500;">
+                        ⚠️ 支付完成后，请联系客服激活账号
+                    </p>
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                    <p style="margin-bottom: 8px;"><strong>支付金额：</strong>¥9.9</p>
+                    <p style="margin-bottom: 8px;"><strong>客服微信：</strong>xhs_ai_helper</p>
+                    <p style="margin: 0;"><strong>备用邮箱：</strong>support@xiaohongshu-ai.com</p>
+                </div>
+                <button onclick="contactSupport()" style="width: 100%; margin-top: 20px; padding: 14px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    👉 联系客服立即开通
                 </button>
             </div>
         </div>
@@ -1420,6 +1492,96 @@
                 showToast('🎉 恭喜，VIP 开通成功！');
             }
         }
+        
+        // 使用激活码开通VIP
+        async function activateVip() {
+            if (!currentUser) {
+                showToast('请先登录');
+                return;
+            }
+            
+            const code = document.getElementById('activationCode').value.trim();
+            if (!code) {
+                showToast('请输入激活码');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/activate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        user_id: currentUser.user_id,
+                        code: code 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser.is_vip = true;
+                    updateUserSection();
+                    updateQuotaDisplay();
+                    closeModal('vipModal');
+                    document.getElementById('activationCode').value = '';
+                    showToast('🎉 激活成功！欢迎成为VIP会员');
+                } else {
+                    showToast(data.message || '激活码无效');
+                }
+            } catch (error) {
+                showToast('激活失败，请稍后重试');
+            }
+        }
+        
+        // 显示支付二维码
+        async function showPaymentQR(type) {
+            const qrCode = document.getElementById('paymentQRCode');
+            const title = document.getElementById('paymentTitle');
+            
+            if (type === 'wechat') {
+                title.textContent = '💚 微信支付';
+                // 这里可以显示真实的微信收款码图片
+                // 暂时使用示例二维码占位
+                qrCode.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 80px; margin-bottom: 16px;">💚</div>
+                        <div style="font-size: 14px; color: #666;">微信收款码</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 8px;">请截图联系客服</div>
+                    </div>
+                `;
+            } else if (type === 'alipay') {
+                title.textContent = '🔵 支付宝支付';
+                qrCode.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 80px; margin-bottom: 16px;">🔵</div>
+                        <div style="font-size: 14px; color: #666;">支付宝收款码</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 8px;">请截图联系客服</div>
+                    </div>
+                `;
+            }
+            
+            closeModal('vipModal');
+            document.getElementById('paymentQRModal').classList.add('active');
+        }
+        
+        // 关闭支付二维码弹窗
+        function closePaymentQR() {
+            document.getElementById('paymentQRModal').classList.remove('active');
+            showVipModal(); // 重新显示VIP弹窗
+        }
+        
+        // 联系客服
+        function contactSupport() {
+            // 复制客服微信
+            navigator.clipboard.writeText('xhs_ai_helper');
+            showToast('✅ 客服微信已复制到剪贴板');
+            
+            // 提示用户添加好友
+            setTimeout(() => {
+                showToast('📱 请添加客服微信：xhs_ai_helper');
+            }, 1500);
+        }
+
 
         async function showHistoryModal() {
             if (!currentUser) {
