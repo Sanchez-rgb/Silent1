@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书AI文案生成器 - 专业内容创作平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF2442;
+            --primary-dark: #E61E39;
+            --primary-light: #FFE8EB;
+            --secondary: #101828;
+            --text-primary: #101828;
+            --text-secondary: #667085;
+            --text-muted: #98A2B3;
+            --border: #EAECF0;
+            --background: #F9FAFB;
+            --white: #FFFFFF;
+            --success: #12B76A;
+            --warning: #F79009;
+            --error: #D92D20;
+            --shadow-sm: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
+            --shadow-md: 0 4px 6px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+            --shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+            --shadow-xl: 0 20px 24px -4px rgba(16, 24, 40, 0.08), 0 8px 8px -4px rgba(16, 24, 40, 0.03);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #FAFAFB 0%, #FFFFFF 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Header */
+        nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #FF6B6B 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(255, 36, 66, 0.3);
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, var(--primary) 0%, #FF6B6B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 56px;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            letter-spacing: -0.1px;
+        }
+
+        .hero-title {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 16px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--text-primary) 0%, #344054 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--primary) 0%, #FF6B6B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto 40px;
+            font-weight: 400;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-bottom: 56px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Main Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 440px;
+            gap: 32px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(255, 36, 66, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .card-title-group {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Quota Display */
+        .quota-card {
+            background: linear-gradient(135deg, rgba(255, 36, 66, 0.05) 0%, rgba(255, 107, 107, 0.05) 100%);
+            border: 1px solid rgba(255, 36, 66, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .quota-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .quota-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .quota-count {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .quota-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .quota-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, #FF6B6B 100%);
+            border-radius: 100px;
+            transition: width 0.6s ease;
+        }
+
+        /* Form */
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-label span {
+            color: var(--primary);
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 36, 66, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #FF6B6B 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(255, 36, 66, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(255, 36, 66, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            background: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 16px;
+        }
+
+        /* Loading */
+        .loading-container {
+            display: none;
+            text-align: center;
+            padding: 48px 24px;
+        }
+
+        .loading-container.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Results */
+        .results-card {
+            grid-column: 1 / -1;
+            margin-top: 32px;
+        }
+
+        .version-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .version-tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .version-tab:hover {
+            color: var(--primary);
+        }
+
+        .version-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .copy-section {
+            background: var(--background);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .copy-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .copy-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .copy-content {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Sidebar */
+        .sidebar-card {
+            position: sticky;
+            top: 100px;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            background: var(--background);
+            border-radius: var(--radius-lg);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(16, 24, 40, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--background);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+
+        /* VIP Card */
+        .vip-banner {
+            background: linear-gradient(135deg, #FFD700 0%, #FFB347 100%);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .vip-price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1F2937;
+        }
+
+        .vip-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .vip-feature-item:last-child {
+            border-bottom: none;
+        }
+
+        /* History */
+        .history-list-item {
+            background: var(--background);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .history-list-item:hover {
+            background: rgba(255, 248, 249);
+        }
+
+        .history-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .history-date {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--secondary);
+            color: white;
+            padding: 14px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2000;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toast-container.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .alert-warning {
+            background: #FFF4E5;
+            color: #9C490A;
+            border: 1px solid #FDB0C3;
+        }
+
+        .alert-success {
+            background: #E7F5EF;
+            color: #05603A;
+            border: 1px solid #ABEFC4;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 36px;
+            }
+            .hero-subtitle {
+                font-size: 16px;
+            }
+            .nav-container {
+                padding: 16px;
+            }
+            .main-container {
+                padding: 32px 16px 60px;
+            }
+            .stats-grid {
+                gap: 32px;
+            }
+            .stat-number {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">✨</div>
+                <span class="logo-text">小红书AI文案生成器</span>
+            </a>
+            <div class="nav-right" id="userSection">
+                <button class="btn btn-secondary" onclick="showLoginModal()">
+                    🔐 登录
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-badge">
+                <span>🚀</span> 专业级AI内容创作
+            </div>
+            <h1 class="hero-title">
+                一键生成<span>小红书爆款文案</span>
+            </h1>
+            <p class="hero-subtitle">
+                输入产品信息，AI 自动生成 3 种不同风格的专业文案，包含标题、正文和标签
+            </p>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">版本对比</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">创作灵感</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">10s</div>
+                    <div class="stat-label">极速生成</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Left - Main Form -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                    <div class="card-icon-wrapper">📝</div>
+                    <div class="card-title-group">
+                        <div class="card-title">文案生成</div>
+                        <div class="card-desc">填写产品信息，一键生成专业文案</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="quota-card" id="quotaDisplay">
+                        <div class="quota-header">
+                            <span class="quota-text">今日免费次数</span>
+                            <span class="quota-count" id="quotaCount">3/3</span>
+                        </div>
+                        <div class="quota-bar">
+                            <div class="quota-fill" id="quotaFill" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">产品关键词 <span>*</span></label>
+                        <input type="text" id="keywords" class="form-input" placeholder="例如：精华液、补水保湿、美白面霜">
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">产品卖点 <span>*</span></label>
+                        <textarea id="sellingPoints" class="form-textarea" placeholder="例如：深层补水、持久锁水、敏感肌可用、天然成分"></textarea>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">目标人群 <span>*</span></label>
+                        <input type="text" id="targetAudience" class="form-input" placeholder="例如：25-35岁女性、上班族、学生党、美妆爱好者">
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">语气风格 <span>*</span></label>
+                        <select id="tone" class="form-select">
+                            <option value="sweet">💖 甜美可爱</option>
+                            <option value="professional">📊 专业干货</option>
+                            <option value="humorous">😂 幽默搞笑</option>
+                            <option value="emotional">💗 情感共鸣</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" id="generateBtn" onclick="generateCopy()">
+                        🚀 立即生成文案
+                    </button>
+
+                    <div class="loading-container" id="loading">
+                        <div class="spinner"></div>
+                        <div class="loading-text">AI 正在为您创作精彩内容...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card results-card" id="resultsCard" style="display: none;">
+                <div class="card-header">
+                    <div class="card-icon-wrapper">💫</div>
+                    <div class="card-title-group">
+                        <div class="card-title">生成结果</div>
+                        <div class="card-desc">点击版本标签切换查看</div>
+                    </div>
+                </div>
+                <div class="version-tabs" id="versionTabs"></div>
+                <div class="card-body" id="resultContent"></div>
+            </div>
+        </div>
+
+        <!-- Right - Sidebar Tools -->
+        <div class="sidebar-card">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon-wrapper">🛠️</div>
+                    <div class="card-title-group">
+                        <div class="card-title">实用工具</div>
+                        <div class="card-desc">提升文案质量</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">违禁词检测</div>
+                        <textarea id="checkText" class="form-textarea" style="margin-bottom: 12px;" placeholder="输入需要检测的文案内容..."></textarea>
+                        <button class="btn btn-secondary btn-full" onclick="checkProhibited()">
+                            🔍 开始检测
+                        </button>
+                        <div id="checkResult"></div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">AI排版优化</div>
+                        <textarea id="optimizeText" class="form-textarea" style="margin-bottom: 12px;" placeholder="输入需要优化排版的文案..."></textarea>
+                        <button class="btn btn-secondary btn-full" onclick="optimizeFormat()">
+                            ✨ 智能优化
+                        </button>
+                        <div id="optimizeResult"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-backdrop" id="loginModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">🔐 登录账号</h3>
+                <button class="modal-close" onclick="closeModal('loginModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-section">
+                    <label class="form-label">手机号</label>
+                    <input type="tel" id="phone" class="form-input" placeholder="请输入手机号">
+                </div>
+                <div class="form-section">
+                    <label class="form-label">验证码 <span style="color: var(--text-muted); font-size: 13px; font-weight: 400;">(测试版固定: 123456)</span></label>
+                    <input type="text" id="code" class="form-input" value="123456">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('loginModal')">取消</button>
+                <button class="btn btn-primary" onclick="login()">立即登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIP Modal -->
+    <div class="modal-backdrop" id="vipModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">🎁 升级 VIP 会员</h3>
+                <button class="modal-close" onclick="closeModal('vipModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="vip-banner">
+                    <div class="vip-price">¥9.9<span style="font-size: 20px; font-weight: 500;">/月</span></div>
+                    <p style="color: #4B4431; margin-top: 8px; font-size: 14px;">一杯奶茶钱，无限创作</p>
+                </div>
+                <div class="vip-feature-item">
+                    <span>✅</span>
+                    <span>无限次生成文案</span>
+                </div>
+                <div class="vip-feature-item">
+                    <span>✅</span>
+                    <span>历史记录保存与管理</span>
+                </div>
+                <div class="vip-feature-item">
+                    <span>✅</span>
+                    <span>优先使用最新 AI 模型</span>
+                </div>
+                <div class="vip-feature-item">
+                    <span>✅</span>
+                    <span>专属客服支持</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('vipModal')">取消</button>
+                <button class="btn btn-primary" onclick="subscribe()" style="background: linear-gradient(135deg, #FFD700 0%, #FFB347 100%); color: #1F2937;">
+                    立即开通
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal-backdrop" id="historyModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">📚 历史记录</h3>
+                <button class="modal-close" onclick="closeModal('historyModal')">×</button>
+            </div>
+            <div class="modal-body" id="historyList"></div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast"></div>
+
+    <script>
+        let currentUser = null;
+        let generatedVersions = [];
+        let currentVersion = 0;
+
+        function getFreeCount() {
+            const today = new Date().toDateString();
+            const stored = localStorage.getItem('freeCount');
+            if (stored) {
+                const data = JSON.parse(stored);
+                if (data.date === today) {
+                    return data.count;
+                }
+            }
+            return 3;
+        }
+
+        function updateFreeCount(count) {
+            const today = new Date().toDateString();
+            localStorage.setItem('freeCount', JSON.stringify({ date: today, count }));
+        }
+
+        function updateQuotaDisplay() {
+            if (currentUser && currentUser.is_vip) {
+                document.getElementById('quotaDisplay').innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: #12B76A;">✨ VIP 会员</div>
+                        <div style="font-size: 13px; color: #667085;">无限次使用所有功能</div>
+                    </div>
+                    <div style="font-size: 32px; font-weight: 700; color: #12B76A;">∞</div>
+                `;
+            } else {
+                const count = getFreeCount();
+                const percentage = (count / 3) * 100;
+                document.getElementById('quotaCount').textContent = `${count}/3`;
+                document.getElementById('quotaFill').style.width = `${percentage}%`;
+            }
+        }
+
+        function checkQuota() {
+            if (currentUser && currentUser.is_vip) return true;
+            if (getFreeCount() <= 0) {
+                showToast('免费次数已用完，请登录开通 VIP');
+                showLoginModal();
+                return false;
+            }
+            return true;
+        }
+
+        function useQuota() {
+            if (!currentUser || !currentUser.is_vip) {
+                const count = getFreeCount() - 1;
+                updateFreeCount(count);
+                updateQuotaDisplay();
+            }
+        }
+
+        async function generateCopy() {
+            const keywords = document.getElementById('keywords').value.trim();
+            const sellingPoints = document.getElementById('sellingPoints').value.trim();
+            const targetAudience = document.getElementById('targetAudience').value.trim();
+            const tone = document.getElementById('tone').value;
+
+            if (!keywords || !sellingPoints || !targetAudience) {
+                showToast('请填写完整的文案信息');
+                return;
+            }
+            if (!checkQuota()) {
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keywords, selling_points: sellingPoints, target_audience: targetAudience, tone })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    generatedVersions = data.versions;
+                    currentVersion = 0;
+                    renderResults();
+                    useQuota();
+                    showToast('🎉 文案生成成功！');
+                } else {
+                    showToast(data.detail || '生成失败，请重试');
+                }
+            } catch (e) {
+                showToast('网络错误，请检查连接');
+            } finally {
+                btn.disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function renderResults() {
+            document.getElementById('resultsCard').style.display = 'block';
+            const resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            const tabsContainer = document.getElementById('versionTabs');
+            tabsContainer.innerHTML = '';
+            for (let i = 0; i < generatedVersions.length; i++) {
+                const tab = document.createElement('button');
+                tab.className = 'version-tab' + (i === currentVersion ? ' active' : '');
+                tab.textContent = `版本 ${i + 1}`;
+                tab.onclick = () => {
+                    currentVersion = i;
+                    renderResults();
+                };
+                tabsContainer.appendChild(tab);
+            }
+
+            const content = generatedVersions[currentVersion];
+            const resultDiv = document.getElementById('resultContent');
+            resultDiv.innerHTML = `
+                <div class="copy-section">
+                    <div class="copy-section-header">
+                        <span class="copy-section-title">📌 标题</span>
+                        <button class="btn btn-secondary btn-small" onclick="copyText('title-${currentVersion}')">📋 复制</button>
+                    </div>
+                    <div class="copy-content" id="title-${currentVersion}">${content.title}</div>
+                </div>
+                <div class="copy-section">
+                    <div class="copy-section-header">
+                        <span class="copy-section-title">📄 正文</span>
+                        <button class="btn btn-secondary btn-small" onclick="copyText('content-${currentVersion}')">📋 复制</button>
+                    </div>
+                    <div class="copy-content" id="content-${currentVersion}">${content.content}</div>
+                </div>
+                <div class="copy-section">
+                    <div class="copy-section-header">
+                        <span class="copy-section-title">🏷️ 标签</span>
+                        <button class="btn btn-secondary btn-small" onclick="copyText('tags-${currentVersion}')">📋 复制</button>
+                    </div>
+                    <div class="copy-content" id="tags-${currentVersion}">${content.tags}</div>
+                </div>
+                <div style="margin-top: 24px;">
+                    <button class="btn btn-primary btn-full" onclick="saveHistory()">💾 保存到历史记录</button>
+                </div>
+            `;
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text);
+            showToast('✅ 已复制到剪贴板');
+        }
+
+        async function checkProhibited() {
+            const text = document.getElementById('checkText').value;
+            const response = await fetch('/api/check-prohibited', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            const data = await response.json();
+            const resultDiv = document.getElementById('checkResult');
+            if (data.has_prohibited) {
+                resultDiv.innerHTML = `<div class="alert alert-warning" style="margin-top: 16px;">⚠️ 发现违禁词：${data.words.join('、')}</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="alert alert-success" style="margin-top: 16px;">✅ 未发现违禁词，内容安全！</div>`;
+            }
+        }
+
+        async function optimizeFormat() {
+            const text = document.getElementById('optimizeText').value;
+            const response = await fetch('/api/optimize-format', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            const data = await response.json();
+            document.getElementById('optimizeResult').innerHTML = `
+                <div class="copy-section" style="margin-top: 16px;">
+                    <div class="copy-section-header">
+                        <span class="copy-section-title">✨ 优化结果</span>
+                        <button class="btn btn-secondary btn-small" onclick="copyText('optimizedText')">📋 复制</button>
+                    </div>
+                    <div class="copy-content" id="optimizedText">${data.optimized}</div>
+                </div>
+            `;
+        }
+
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        async function login() {
+            const phone = document.getElementById('phone').value;
+            const code = document.getElementById('code').value;
+            if (!phone) {
+                showToast('请输入手机号');
+                return;
+            }
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, code })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                currentUser = data;
+                updateUserSection();
+                updateQuotaDisplay();
+                closeModal('loginModal');
+                showToast('🎉 登录成功！');
+            } else {
+                showToast(data.detail || '登录失败');
+            }
+        }
+
+        function updateUserSection() {
+            const section = document.getElementById('userSection');
+            if (currentUser) {
+                let html = `<span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--background); border-radius: 8px; font-size: 14px; font-weight: 500;">👤 ${currentUser.phone}</span>`;
+                if (currentUser.is_vip) {
+                    html += `<button class="btn btn-secondary btn-small" style="background: linear-gradient(135deg, #FFD700 0%, #FFB347 100%); color: #1F2937; border: none;" disabled>✨ VIP 会员</button>`;
+                } else {
+                    html += `<button class="btn btn-secondary btn-small" style="background: linear-gradient(135deg, #FFD700 0%, #FFB347 100%); color: #1F2937; border: none;" onclick="showVipModal()">🎁 升级 VIP</button>`;
+                }
+                html += `<button class="btn btn-secondary btn-small" onclick="showHistoryModal()">📚 历史</button>`;
+                html += `<button class="btn btn-secondary btn-small" onclick="logout()">退出</button>`;
+                section.innerHTML = html;
+            } else {
+                section.innerHTML = `<button class="btn btn-secondary" onclick="showLoginModal()">🔐 登录</button>`;
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            updateUserSection();
+            updateQuotaDisplay();
+            showToast('已退出登录');
+        }
+
+        function showVipModal() {
+            document.getElementById('vipModal').classList.add('active');
+        }
+
+        async function subscribe() {
+            if (!currentUser) return;
+            const response = await fetch(`/api/users/${currentUser.user_id}/subscribe`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                currentUser.is_vip = true;
+                updateUserSection();
+                updateQuotaDisplay();
+                closeModal('vipModal');
+                showToast('🎉 恭喜，VIP 开通成功！');
+            }
+        }
+
+        async function showHistoryModal() {
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+            const response = await fetch(`/api/users/${currentUser.user_id}/history`);
+            const histories = await response.json();
+            const list = document.getElementById('historyList');
+            if (histories.length === 0) {
+                list.innerHTML = `<div style="text-align: center; color: #98A2B3; padding: 40px;">暂无历史记录，快去生成文案吧！</div>`;
+            } else {
+                list.innerHTML = histories.map(h => `
+                    <div class="history-list-item" onclick="loadHistory(${JSON.stringify(h).replace(/"/g, '&quot;')}">
+                        <div class="history-title">${h.title}</div>
+                        <div class="history-date">${h.created_at}</div>
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); loadHistory(${JSON.stringify(h).replace(/"/g, '&quot;')}">加载</button>
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); deleteHistory(${h.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('historyModal').classList.add('active');
+        }
+
+        function loadHistory(h) {
+            generatedVersions = [h];
+            currentVersion = 0;
+            renderResults();
+            closeModal('historyModal');
+            showToast('已加载历史记录');
+        }
+
+        async function deleteHistory(id) {
+            if (!currentUser) return;
+            await fetch(`/api/users/${currentUser.user_id}/history/${id}`, { method: 'DELETE' });
+            showToast('已删除');
+            showHistoryModal();
+        }
+
+        async function saveHistory() {
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+            const content = generatedVersions[currentVersion];
+            await fetch(`/api/users/${currentUser.user_id}/history`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(content)
+            });
+            showToast('✅ 已保存到历史记录');
+        }
+
+        function showModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        document.querySelectorAll('.modal-backdrop').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        updateQuotaDisplay();
+    </script>
+</body>
+</html>
